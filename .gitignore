@@ -141,3 +141,9 @@ cython_debug/
 # whatsapp database
 pywhatkit_dbs.txt
 
+# IDEs and Editors
+.idea/
+.vscode/
+
+# Local Python Environments
+venv_38/

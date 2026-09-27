@@ -23,7 +23,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = "p#dw566&a7f70whcd*$7k9cthul*pshe$xzd-+fiz)^lulf*=@"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
@@ -87,8 +87,6 @@ DATABASES = {
         "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
     }
 }
-
-
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
 
@@ -128,30 +126,17 @@ USE_L10N = True
 
 USE_TZ = True
 
-EMAIL_HOST = "localhost"
-EMAIL_PORT = 587
-EMAIL_HOST_USER = ""
-EMAIL_HOST_PASSWORD = ""
-EMAIL_USE_TLS = False
-DEFAULT_FROM_EMAIL = "RESCUE <no-reply@rescue.com>"
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "main_app", "static"),
+]
+
 MEDIA_URL = "/media/"
-
-if DEBUG:
-
-    STATICFILES_DIRS = [os.path.join(BASE_DIR + "/main_app/", "static")]
-
-else:
-
-    STATIC_ROOT = os.path.join(BASE_DIR + "/main_app/", "static")
-
-
-MEDIA_ROOT = [os.path.join(BASE_DIR + "/main_app/", "media")]
+MEDIA_ROOT = os.path.join(BASE_DIR, "main_app", "media")
 
 
 # SMTP Configuration
@@ -184,16 +169,3 @@ SOCIALACCOUNT_PROVIDERS = {
         },
     }
 }
-
-
-...
-
-# SECURITY WARNING: keep the secret key used in production secret!
-...
-
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
-
-...
-

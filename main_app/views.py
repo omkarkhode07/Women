@@ -12,7 +12,7 @@ from .mail import send_email
 from .whatsapp import send_whatsapp
 from .location import lat, log
 from .forms import UserCreateForm, LoginForm
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMessage, send_mail
 from django.views import View
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -20,8 +20,6 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.urls import reverse
 from .utils import account_activation_token
 from django.http import JsonResponse
-import json
-import urllib
 import hashlib
 
 # Create your views here
@@ -56,7 +54,7 @@ def register(request):
             uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
             domain = get_current_site(request).domain
             link = reverse(
-                "activate",
+                "main_app:activate",
                 kwargs={
                     "uidb64": uidb64,
                     "token": account_activation_token.make_token(user),
@@ -172,7 +170,11 @@ def login_request(request):
                         )
                         response = redirect("main_app:home")
                         response.set_cookie("username", user.username, max_age=30 * 24 * 60 * 60)
-                        response.set_cookie("family_mobile_numbers", getattr(user.emergency_profile, "family_mobile_numbers", ""), max_age=30 * 24 * 60 * 60)
+                        emergency_profile = getattr(user, "emergency_profile", None)
+                        family_numbers = (
+                            emergency_profile.family_mobile_numbers if emergency_profile else ""
+                        )
+                        response.set_cookie("family_mobile_numbers", family_numbers, max_age=30 * 24 * 60 * 60)
                         response.set_cookie(
                             "password_hash",
                             hashlib.sha256(password.encode("utf-8")).hexdigest(),
@@ -221,13 +223,7 @@ def login_request(request):
 
 
 def emergency_contact(request):
-    users = User.objects.all()
-    curr = 0
-    for user in users:
-        if request.user.is_authenticated:
-            curr = user
-            break
-    if curr == 0:
+    if not request.user.is_authenticated:
         return redirect("main_app:login")
     contacts = contact.objects.filter(user=request.user)
     total_contacts = contacts.count()
@@ -250,10 +246,8 @@ def create_contact(request):
             messages.info(request, "An email has been sent to your contact!!")
             return redirect("main_app:emergency_contact")
         messages.error(request, "Invalid username or password")
-    
-    
-    return render(request, "main_app/create_contact.html", {'form':form})
-    
+
+    return render(request, "main_app/create_contact.html", {"form": form})
 
 
 def update_contact(request, pk):
@@ -395,23 +389,29 @@ def check_email(request):
     return JsonResponse({"exists": "no"})
 
 
+def email_sent(request):
+    return render(request, "main_app/email_sent.html")
+
+
 def contact_user(request):
     if request.method == "POST":
-        message_name = request.POST["message-name"]
-        message_email = request.POST["message-email"]
-        message = request.POST["message"]
+        message_name = request.POST.get("message-name", "")
+        message_email = request.POST.get("message-email", "")
+        message = request.POST.get("message", "")
 
-        # send an email
-        send_email(  # noqa
-            message_name,  # subject
-            message,  # message
-            message_email,  # from email
-            ["rescue@gmail.com"],  # To Email
-        )
+        try:
+            send_mail(
+                f"Rescue Contact: {message_name}",
+                f"From: {message_email}\n\nMessage:\n{message}",
+                settings.DEFAULT_FROM_EMAIL,
+                ["rescue@gmail.com"],
+                fail_silently=True,
+            )
+        except Exception:
+            pass
 
         return render(
             request, "main_app/contact_user.html", {"message_name": message_name}
         )
 
-    else:
-        return render(request, "main_app/contact_user.html", {})
+    return render(request, "main_app/contact_user.html", {})

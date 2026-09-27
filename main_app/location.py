@@ -1,10 +1,19 @@
 import requests
 
-res = requests.get("https://ipinfo.io/")
-data = res.json()
+city = ""
+state = ""
+lat = "28.6139"
+log = "77.2090"
 
-city = data["city"]
-state = data["region"]
-location = data["loc"].split(",")
-lat = location[0]
-log = location[1]
+try:
+    res = requests.get("https://ipinfo.io/", timeout=3)
+    if res.status_code == 200:
+        data = res.json()
+        city = data.get("city", "")
+        state = data.get("region", "")
+        loc_coords = data.get("loc", "").split(",")
+        if len(loc_coords) == 2:
+            lat = loc_coords[0]
+            log = loc_coords[1]
+except Exception:
+    pass

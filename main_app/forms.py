@@ -9,27 +9,9 @@ class ContactForm(ModelForm):
     class Meta:
         model = contact
         fields = ["name", "email", "mobile_no", "relation"]
-        Father = "Father"
-        Mother = "Mother"
-        Brother = "Brother"
-        Sister = "Sister"
-        Husband = "Husband"
-        Friend = "Friend"
-        Relative = "Relative"
-        Other = "Other"
-        relations = (
-            (Father, "Father"),
-            (Mother, "Mother"),
-            (Brother, "Brother"),
-            (Sister, "Sister"),
-            (Husband, "Husband"),
-            (Friend, "Friend"),
-            (Relative, "Relative"),
-            (Other, "Other"),
-        )
         widgets = {
             "relation": forms.Select(
-                choices=relations, attrs={"class": "form-control"}
+                choices=contact.relations, attrs={"class": "form-control"}
             ),
         }
 
