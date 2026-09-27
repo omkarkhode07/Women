@@ -42,7 +42,7 @@ def register(request):
             username = form.cleaned_data.get("username")
             email = form.cleaned_data.get("email")
             family_numbers = form.cleaned_data.get("family_mobile_numbers", "")
-            user.is_active = False
+            user.is_active = True
             user.save()
 
             emergency_count = form.cleaned_data.get("emergency_contact_count", 5)
@@ -51,36 +51,9 @@ def register(request):
             emergency_profile.family_mobile_numbers = family_numbers
             emergency_profile.save()
 
-            uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
-            domain = get_current_site(request).domain
-            link = reverse(
-                "main_app:activate",
-                kwargs={
-                    "uidb64": uidb64,
-                    "token": account_activation_token.make_token(user),
-                },
-            )
-
-            activate_url = "http://" + domain + link
-
-            email_subject = "Rescue - Activate you Account!"
-            email_body = (
-                "Hi  "
-                + user.username  # noqa
-                + "  ,  Please use this link to verify your account\n"  # noqa
-                + activate_url  # noqa
-            )
-            email = EmailMessage(
-                email_subject,
-                email_body,
-                "noreply@gmail.com",
-                [email],
-            )
             messages.success(request, f"New Account Created Successfully: {username}")
-            messages.success(request, "Check your email to Activate your account!")
-            email.send(fail_silently=False)
 
-            response = redirect('main_app:email_sent')
+            response = redirect('main_app:login')
             response.set_cookie("username", username, max_age=30 * 24 * 60 * 60)
             response.set_cookie("family_mobile_numbers", family_numbers, max_age=30 * 24 * 60 * 60)
             response.set_cookie(
@@ -100,8 +73,9 @@ def register(request):
                 "The Email you entered has already been taken. Please try another Email",
             )
         else:
-            for msg in form.error_messages:
-                messages.warning(request, f"{form.error_messages[msg]}")
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.warning(request, error)
 
     else:
         form = UserCreateForm()
